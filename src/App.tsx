@@ -9,6 +9,8 @@ import Vendors from "./pages/Vendors";
 import Personnel from "./pages/Personnel";
 import ProcurementPortal from "./pages/ProcurementPortal";
 import NotFound from "./pages/NotFound";
+import InternalLanding from "./pages/InternalLanding";
+import VendorLanding from "./pages/VendorLanding";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/internal" element={<InternalLanding />} />
+          <Route path="/vendor" element={<VendorLanding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/vendors" element={<Vendors />} />
           <Route path="/personnel" element={<Personnel />} />
