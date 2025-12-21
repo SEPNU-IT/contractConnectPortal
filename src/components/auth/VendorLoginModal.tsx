@@ -3,18 +3,21 @@ import { X, Lock, User, Eye, EyeOff, ArrowRight, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ForgetPasswordModal from './ForgetPasswordModal';
 
 interface VendorLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogin: (username: string, password: string) => void;
+  onForgotPassword?: (email: string) => void;
 }
 
-export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLoginModalProps) {
+export default function VendorLoginModal({ isOpen, onClose, onLogin, onForgotPassword }: VendorLoginModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,25 +30,36 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
     }, 1000);
   };
 
+  const handleForgotPassword = (email: string) => {
+    if (onForgotPassword) {
+      onForgotPassword(email);
+    }
+    setShowForgotPassword(false);
+  };
+
+  const openForgotPassword = () => {
+    setShowForgotPassword(true);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* Modal */}
       <div className="relative w-full max-w-md">
         {/* Glow effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 via-green-400 to-rose-400 rounded-3xl blur opacity-20 animate-pulse"></div>
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-3xl blur-sm opacity-15"></div>
         
         {/* Modal content */}
-        <div className="relative bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 shadow-2xl overflow-hidden">
+        <div className="relative bg-black/90 backdrop-blur-xl rounded-3xl border border-green-500/30 shadow-2xl overflow-hidden">
           {/* Background pattern */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-green-500/5 to-rose-500/5"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-green-900/10 via-green-800/8 to-green-700/12"></div>
           <div 
             className="absolute inset-0 opacity-5"
             style={{
@@ -60,7 +74,7 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 backdrop-blur-sm z-10 cursor-pointer"
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-green-500/20 rounded-full transition-all duration-200 backdrop-blur-sm z-10 cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -69,8 +83,8 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
             {/* Header */}
             <div className="text-center mb-8">
               {/* Icon */}
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500/20 to-green-500/20 rounded-2xl mb-4 backdrop-blur-sm border border-white/10">
-                <Shield className="h-8 w-8 text-white" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-600/30 to-green-700/40 rounded-2xl mb-4 backdrop-blur-sm border border-green-500/30">
+                <Shield className="h-8 w-8 text-green-300" />
               </div>
               
               {/* Title */}
@@ -90,13 +104,18 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
                   Username
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-800" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-300 drop-shadow-sm" />
                   <Input
                     id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-blue-400/50 focus:ring-blue-400/20 backdrop-blur-sm rounded-xl h-12"
+                    style={{ 
+                      backgroundColor: 'rgba(17, 24, 39, 0.7)', 
+                      borderColor: 'rgba(34, 197, 94, 0.4)',
+                      color: 'white'
+                    }}
+                    className="pl-10 border-green-500/40 text-white placeholder-gray-300 focus:border-green-400/80 focus:ring-green-400/30 backdrop-blur-sm rounded-xl h-12 transition-colors [&:focus]:!bg-gray-900/70"
                     placeholder="Enter your username"
                     required
                   />
@@ -109,20 +128,25 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-800" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-green-300 drop-shadow-sm" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-blue-400/50 focus:ring-blue-400/20 backdrop-blur-sm rounded-xl h-12"
+                    style={{ 
+                      backgroundColor: 'rgba(17, 24, 39, 0.7)', 
+                      borderColor: 'rgba(34, 197, 94, 0.4)',
+                      color: 'white'
+                    }}
+                    className="pl-10 pr-10 border-green-500/40 text-white placeholder-gray-300 focus:border-green-400/80 focus:ring-green-400/30 backdrop-blur-sm rounded-xl h-12 transition-colors [&:focus]:!bg-gray-900/70"
                     placeholder="Enter your password"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-700 hover:text-green-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-300 hover:text-green-200 transition-colors drop-shadow-sm"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -133,7 +157,8 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
               <div className="flex justify-end">
                 <button
                   type="button"
-                  className="text-sm text-blue-300 hover:text-blue-200 transition-colors"
+                  onClick={openForgotPassword}
+                  className="text-sm text-green-400 hover:text-green-300 transition-colors"
                 >
                   Forgot password?
                 </button>
@@ -141,11 +166,11 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
               
               {/* Login button */}
               <div className="relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400 via-green-400 to-rose-400 rounded-xl blur opacity-30"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-xl blur-sm opacity-25"></div>
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="relative w-full bg-gradient-to-r from-blue-500/80 via-green-500/80 to-blue-600/80 hover:from-blue-400/90 hover:via-green-400/90 hover:to-blue-500/90 text-white font-semibold py-3 px-6 rounded-xl backdrop-blur-sm border border-white/10 transition-all duration-300 group"
+                  className="relative w-full bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-500 hover:via-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl backdrop-blur-sm border border-green-500/30 transition-all duration-300 group shadow-lg"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
@@ -164,13 +189,20 @@ export default function VendorLoginModal({ isOpen, onClose, onLogin }: VendorLog
             
             {/* Footer */}
             <div className="mt-6 text-center">
-              <p className="text-white/50 text-xs">
+              <p className="text-gray-400 text-xs">
                 Secure access powered by enterprise-grade encryption
               </p>
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Forget Password Modal */}
+      <ForgetPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        onSubmit={handleForgotPassword}
+      />
     </div>
   );
 }

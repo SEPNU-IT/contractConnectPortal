@@ -16,7 +16,9 @@ import {
   AlertCircle,
   Building,
   Shield,
-  TrendingUp
+  TrendingUp,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 
 interface Contract {
@@ -75,6 +77,13 @@ export default function ProcurementPortal() {
   const [newContractNumber, setNewContractNumber] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'expiring' | 'expired'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const contractsPerPage = 20;
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Contract | null;
+    direction: 'asc' | 'desc';
+  }>({ key: null, direction: 'asc' });
 
   // Check if contract number exists
   const existingMatches = contracts.filter(c => 
@@ -84,12 +93,78 @@ export default function ProcurementPortal() {
     c.contractNumber.toLowerCase() === newContractNumber.toLowerCase()
   );
 
-  // Filter contracts for display
-  const filteredContracts = contracts.filter(c =>
-    c.contractNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.contractOwner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter contracts based on search term and active filter
+  const getFilteredContracts = () => {
+    let filtered = contracts.filter(c =>
+      c.contractNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.contractOwner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Apply status filter
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(c => c.status === activeFilter);
+    }
+
+    // Apply sorting
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key!];
+        const bValue = b[sortConfig.key!];
+        
+        // Handle date sorting
+        if (sortConfig.key === 'startDate' || sortConfig.key === 'expiryDate') {
+          const aDate = new Date(aValue).getTime();
+          const bDate = new Date(bValue).getTime();
+          return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
+        }
+        
+        // Handle string sorting
+        const aString = String(aValue).toLowerCase();
+        const bString = String(bValue).toLowerCase();
+        
+        if (aString < bString) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aString > bString) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredContracts = getFilteredContracts();
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredContracts.length / contractsPerPage);
+  const startIndex = (currentPage - 1) * contractsPerPage;
+  const endIndex = startIndex + contractsPerPage;
+  const paginatedContracts = filteredContracts.slice(startIndex, endIndex);
+
+  // Reset to first page when filter or search changes
+  const handleFilterChange = (filter: typeof activeFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
+
+  // Handle column sorting
+  const handleSort = (key: keyof Contract) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  // Get sort indicator for column headers
+  const getSortIndicator = (key: keyof Contract) => {
+    if (sortConfig.key !== key) {
+      return <ChevronUp className="w-4 h-4 text-gray-300" />;
+    }
+    return sortConfig.direction === 'asc' ? 
+      <ChevronUp className="w-4 h-4 text-blue-600" /> : 
+      <ChevronDown className="w-4 h-4 text-blue-600" />;
+  };
 
   const handleSSO = (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,23 +321,69 @@ export default function ProcurementPortal() {
         {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { label: 'Total Contracts', value: contracts.length, icon: FileText, gradient: 'from-blue-800 to-blue-900', bgGradient: 'from-pink-50 to-pink-100' },
-            { label: 'Active Contracts', value: contracts.filter(c => c.status === 'active').length, icon: CheckCircle, gradient: 'from-emerald-500 to-emerald-600', bgGradient: 'from-emerald-50 to-emerald-100' },
-            { label: 'Expiring Soon', value: contracts.filter(c => c.status === 'expiring').length, icon: AlertCircle, gradient: 'from-amber-500 to-orange-500', bgGradient: 'from-amber-50 to-orange-100' },
-            { label: 'Expired', value: contracts.filter(c => c.status === 'expired').length, icon: TrendingUp, gradient: 'from-rose-500 to-red-500', bgGradient: 'from-rose-50 to-red-100' },
-          ].map((stat, i) => (
-            <div key={i} className={`bg-gradient-to-br ${stat.bgGradient} border border-white/50 rounded-2xl p-6 hover:shadow-xl hover:scale-105 transition-all duration-300 backdrop-blur-sm`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">{stat.label}</p>
-                  <p className="text-4xl font-bold text-slate-800">{stat.value}</p>
+            { 
+              label: 'All Contracts', 
+              value: contracts.length, 
+              icon: FileText, 
+              gradient: 'from-blue-800 to-blue-900', 
+              bgGradient: 'from-pink-50 to-pink-100',
+              filter: 'all' as const
+            },
+            { 
+              label: 'Active Contracts', 
+              value: contracts.filter(c => c.status === 'active').length, 
+              icon: CheckCircle, 
+              gradient: 'from-emerald-500 to-emerald-600', 
+              bgGradient: 'from-emerald-50 to-emerald-100',
+              filter: 'active' as const
+            },
+            { 
+              label: 'Expiring Soon', 
+              value: contracts.filter(c => c.status === 'expiring').length, 
+              icon: AlertCircle, 
+              gradient: 'from-amber-500 to-orange-500', 
+              bgGradient: 'from-amber-50 to-orange-100',
+              filter: 'expiring' as const
+            },
+            { 
+              label: 'Expired', 
+              value: contracts.filter(c => c.status === 'expired').length, 
+              icon: TrendingUp, 
+              gradient: 'from-rose-500 to-red-500', 
+              bgGradient: 'from-rose-50 to-red-100',
+              filter: 'expired' as const
+            },
+          ].map((stat, i) => {
+            const isActive = activeFilter === stat.filter;
+            return (
+              <button
+                key={i}
+                onClick={() => handleFilterChange(stat.filter)}
+                className={`bg-gradient-to-br ${stat.bgGradient} border-2 rounded-2xl p-6 transition-all duration-300 backdrop-blur-sm text-left w-full ${
+                  isActive 
+                    ? 'border-blue-500 shadow-xl scale-105 ring-4 ring-blue-200' 
+                    : 'border-white/50 hover:shadow-xl hover:scale-105 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium mb-1 ${
+                      isActive ? 'text-blue-700' : 'text-slate-600'
+                    }`}>{stat.label}</p>
+                    <p className="text-4xl font-bold text-slate-800">{stat.value}</p>
+                    {isActive && (
+                      <p className="text-xs text-blue-600 font-medium mt-1">Active Filter</p>
+                    )}
+                  </div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.gradient} shadow-lg ${
+                    isActive ? 'scale-110' : ''
+                  } transition-transform`}>
+                    <stat.icon className="w-7 h-7 text-white" />
+                  </div>
                 </div>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.gradient} shadow-lg`}>
-                  <stat.icon className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </div>
-          ))}
+              </button>
+            );
+          })}
         </div>
 
         {/* Enhanced Search and Add Section */}
@@ -273,7 +394,10 @@ export default function ProcurementPortal() {
               <Input
                 placeholder="Search contracts, owners, departments..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
                 className="pl-12 h-12 bg-white/70 border-slate-200 focus:border-blue-800 focus:ring-blue-800/20 rounded-xl backdrop-blur-sm"
               />
             </div>
@@ -357,28 +481,71 @@ export default function ProcurementPortal() {
         {/* Enhanced Contracts Table */}
         <div className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl overflow-hidden shadow-lg">
           <div className="px-8 py-6 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-            <h2 className="text-xl font-bold text-slate-800">Contract Registry</h2>
-            <p className="text-sm text-slate-600 mt-1">Manage and track all contract numbers</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {activeFilter === 'all' ? 'All Contracts' : 
+                   activeFilter === 'active' ? 'Active Contracts' :
+                   activeFilter === 'expiring' ? 'Expiring Soon' : 'Expired Contracts'}
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Showing {paginatedContracts.length} of {filteredContracts.length} contracts
+                  {searchTerm && ` matching "${searchTerm}"`}
+                </p>
+              </div>
+              {activeFilter !== 'all' && (
+                <button
+                  onClick={() => handleFilterChange('all')}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-slate-100 via-pink-50 to-blue-50">
                 <tr>
-                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
-                    <Hash className="w-4 h-4 inline mr-2" /> Contract Number
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('contractNumber')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Hash className="w-4 h-4" /> Contract Number
+                      {getSortIndicator('contractNumber')}
+                    </button>
                   </th>
-                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
-                    <User className="w-4 h-4 inline mr-2" /> Contract Owner
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('contractOwner')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <User className="w-4 h-4" /> Contract Owner
+                      {getSortIndicator('contractOwner')}
+                    </button>
                   </th>
                   <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
                     Department
                   </th>
-                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
-                    <Calendar className="w-4 h-4 inline mr-2" /> Start Date
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('startDate')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" /> Start Date
+                      {getSortIndicator('startDate')}
+                    </button>
                   </th>
-                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
-                    <Calendar className="w-4 h-4 inline mr-2" /> Expiry Date
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('expiryDate')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" /> Expiry Date
+                      {getSortIndicator('expiryDate')}
+                    </button>
                   </th>
                   <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
                     Status
@@ -386,7 +553,7 @@ export default function ProcurementPortal() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/50">
-                {filteredContracts.map((contract) => (
+                {paginatedContracts.map((contract) => (
                   <tr 
                     key={contract.id} 
                     className={`transition-all duration-200 ${
@@ -423,16 +590,68 @@ export default function ProcurementPortal() {
               </tbody>
             </table>
 
-            {filteredContracts.length === 0 && (
+            {paginatedContracts.length === 0 && filteredContracts.length === 0 && (
               <div className="px-6 py-16 text-center">
                 <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <FileText className="w-8 h-8 text-slate-400" />
                 </div>
-                <p className="text-slate-600 font-medium">No contracts found matching your search</p>
-                <p className="text-slate-400 text-sm mt-1">Try adjusting your search criteria</p>
+                <p className="text-slate-600 font-medium">No contracts found matching your criteria</p>
+                <p className="text-slate-400 text-sm mt-1">Try adjusting your search or filter</p>
               </div>
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="px-8 py-6 bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Page {currentPage} of {totalPages} • {filteredContracts.length} total contracts
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3"
+                  >
+                    Previous
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                      if (pageNum > totalPages) return null;
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       
