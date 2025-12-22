@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { authenticateByEmail } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Building2, 
   Users, 
@@ -25,6 +27,7 @@ import InternalAuthModal from '@/components/InternalAuthModal';
 export default function AccessSelection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [selectedAccess, setSelectedAccess] = useState<string | null>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isInternalAuthModalOpen, setIsInternalAuthModalOpen] = useState(false);
@@ -59,12 +62,30 @@ export default function AccessSelection() {
   };
 
   const handleInternalAuth = (email: string) => {
-    // Here you would typically validate the email
+    // Authenticate user by email
     console.log('Internal auth attempt:', { email });
     
-    // Close modal and navigate to internal portal
-    setIsInternalAuthModalOpen(false);
-    navigate('/internal');
+    const authenticatedUser = authenticateByEmail(email);
+    
+    if (authenticatedUser) {
+      console.log('Authentication successful:', authenticatedUser);
+      toast({
+        title: "Authentication Successful",
+        description: `Welcome back, ${authenticatedUser.name}!`,
+        duration: 3000,
+      });
+      // Close modal and navigate to internal portal with authenticated user
+      setIsInternalAuthModalOpen(false);
+      navigate('/internal');
+    } else {
+      console.log('Authentication failed: Email not found');
+      toast({
+        title: "Authentication Failed",
+        description: "Email not found in our system. Please check your email address or contact your administrator.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
   };
 
   const scrollToSelection = () => {

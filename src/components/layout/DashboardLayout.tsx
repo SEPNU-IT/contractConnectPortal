@@ -1,7 +1,6 @@
-import { ReactNode, useState } from 'react';
-import { Sidebar } from './Sidebar';
-import { cn } from '@/lib/utils';
+import { ReactNode } from 'react';
 import Header from './Header';
+import Footer from './Footer';
 import type { UserRole } from '@/types';
 
 interface DashboardLayoutProps {
@@ -11,24 +10,20 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, role, userName }: DashboardLayoutProps) {
-  const [sidebarCollapsed] = useState(false);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+    <div className="min-h-screen flex flex-col">
+      {/* Fixed Header */}
       <Header transparent={false} />
-      <div className="flex">
-        <Sidebar role={role} userName={userName} />
-        <main 
-          className={cn(
-            "flex-1 transition-all duration-300 min-h-screen",
-            sidebarCollapsed ? "ml-20" : "ml-64"
-          )}
-        >
-          <div className="p-6 lg:p-8">
-            {children}
-          </div>
-        </main>
-      </div>
+      
+      {/* Main Content with proper alignment matching header */}
+      <main className="flex-1 pt-24 pb-8">
+        <div className="container mx-auto px-6"> {/* Match header container alignment */}
+          {children}
+        </div>
+      </main>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
