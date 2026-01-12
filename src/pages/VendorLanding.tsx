@@ -50,7 +50,7 @@ export default function VendorLanding() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-primary-foreground">
               Vendor Portal - {' '}
               <span className="text-gradient bg-gradient-to-r from-emerald-400 to-teal-300">
-                CCMG System
+                CCMP System
               </span>
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-2xl">

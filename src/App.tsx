@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Vendors from "./pages/Vendors";
 import Personnel from "./pages/Personnel";
 import ProcurementPortal from "./pages/ProcurementPortal";
+import ProcurementDashboard from "./pages/ProcurementDashboard";
 import AdminPanel from "./pages/AdminPanel";
 import Departments from "./pages/Departments";
 import ContractOwnerManagement from "@/components/contractOwners/ContractOwnerManagement";
@@ -34,7 +35,7 @@ const App = () => (
               <Dashboard />
             </ProtectedRoute>
           } />
-          <Route path="/vendors" element={
+          <Route path="admin/vendors" element={
             <ProtectedRoute>
               <Vendors />
             </ProtectedRoute>
@@ -44,9 +45,10 @@ const App = () => (
               <Personnel />
             </ProtectedRoute>
           } />
-          <Route path="/procurement" element={
+          <Route path="/procurement" element={<ProcurementPortal />} />
+          <Route path="/procurement/dashboard" element={
             <ProtectedRoute>
-              <ProcurementPortal />
+              <ProcurementDashboard />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={

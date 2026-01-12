@@ -98,7 +98,7 @@ export default function AccessSelection() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
       {/* Sophisticated Background Pattern */}
-      <div className="fixed inset-0 opacity-[0.06]">
+      <div className="fixed inset-0 opacity-[0.06] pointer-events-none">
         <div className="absolute inset-0" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23059669' fill-opacity='0.8' fill-rule='evenodd'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='53' cy='53' r='1'/%3E%3Ccircle cx='30' cy='30' r='0.5'/%3E%3C/g%3E%3C/svg%3E")`
         }}></div>
@@ -234,7 +234,7 @@ export default function AccessSelection() {
 
             {/* Main Heading */}
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold leading-tight mb-8 animate-fade-in" style={{animationDelay: '0.2s'}}>
-              <span className="text-white">Vendor Contract</span>
+              <span className="text-white lg:text-6xl">Contract Compliance</span>
               <br />
               <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
                 Management Portal
@@ -373,7 +373,7 @@ export default function AccessSelection() {
                   Access the portal that matches your role in the&nbsp;
                 </span>
                 <span className="bg-gradient-to-r from-blue-600 via-green-600 to-rose-500 bg-clip-text text-transparent font-semibold">
-                vendor contract management workflow
+                Contract compliance management workflow
                 </span>
                 <span className="bg-gradient-to-r from-gray-600 via-slate-700 to-gray-600 bg-clip-text text-transparent font-medium">
                   .
@@ -546,12 +546,12 @@ export default function AccessSelection() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
             {[
               { metric: "99.9%", label: "Uptime", icon: Clock, gradient: "from-blue-500 to-blue-600" },
               { metric: "256-bit", label: "Encryption", icon: Shield, gradient: "from-emerald-500 to-emerald-600" },
               { metric: "24/7", label: "Support", icon: HeadphonesIcon, gradient: "from-purple-500 to-purple-600" },
-              { metric: "ISO 27001", label: "Certified", icon: Award, gradient: "from-orange-500 to-orange-600" }
+              // { metric: "ISO 27001", label: "Certified", icon: Award, gradient: "from-orange-500 to-orange-600" }
             ].map((item, index) => (
               <div key={index} className="group text-center">
                 <div className="relative">

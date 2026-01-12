@@ -57,7 +57,7 @@ export default function Header({ transparent = false, notificationCount = 0, onN
             transparent ? "bg-white/30" : "bg-slate-300"
           )}></div>
           
-          {/* CCMG Branding */}
+          {/* CCMP Branding */}
           <div className="flex items-center gap-3">
             <div className={cn(
               "h-10 w-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:scale-105",
@@ -73,7 +73,7 @@ export default function Header({ transparent = false, notificationCount = 0, onN
                 ? "text-white" 
                 : "text-slate-800"
             )}>
-              CCMG
+              CCMP
             </span>
           </div>
         </div>

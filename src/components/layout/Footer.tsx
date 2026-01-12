@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Mail, Phone, MapPin, Linkedin, Twitter, Github } from 'lucide-react';
+import { Mail, Phone, MapPin, Globe } from 'lucide-react';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -20,19 +20,19 @@ export default function Footer() {
                 <img 
                   src="/SeplatLogoClear.png" 
                   alt="Seplat Energy" 
-                  className="h-8 w-auto transition-transform duration-300 group-hover:scale-105 brightness-0 invert"
+                  className="h-8 w-auto transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
               
               {/* Divider */}
               <div className="h-6 w-px bg-gray-600"></div>
               
-              {/* CCMG Branding */}
+              {/* CCMP Branding */}
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                   <span className="text-xl font-bold text-white">C</span>
                 </div>
-                <span className="text-xl font-bold text-white">CCMG</span>
+                <span className="text-xl font-bold text-white">CCMP</span>
               </div>
             </div>
             <p className="text-gray-400 mb-6 leading-relaxed">
@@ -41,22 +41,10 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a 
-                href="#" 
+                href="https://www.seplatenergy.com/" target="_blank" rel="noopener noreferrer" 
                 className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-gray-800"
               >
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a 
-                href="#" 
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-gray-800"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a 
-                href="#" 
-                className="text-gray-400 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-gray-800"
-              >
-                <Github className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -88,7 +76,7 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-lg mb-6">Support</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-gray-400 hover:text-white transition-colors">Documentation</a>
+                <a href="/procurement" className="text-gray-400 hover:text-white transition-colors">Register Contract Number</a>
               </li>
               <li>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</a>
@@ -111,11 +99,11 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-center gap-3 text-gray-400">
                 <Mail className="h-5 w-5 text-blue-400" />
-                <span>support@ccmg.com</span>
+                <span>support@seplatenergy.com</span>
               </li>
               <li className="flex items-center gap-3 text-gray-400">
                 <Phone className="h-5 w-5 text-blue-400" />
-                <span>+1 (555) 123-4567</span>
+                <span>+234 (555) 123-4567</span>
               </li>
               <li className="flex items-start gap-3 text-gray-400">
                 <MapPin className="h-5 w-5 text-blue-400 mt-0.5" />
@@ -131,7 +119,7 @@ export default function Footer() {
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-400 text-sm">
-              © 2025 Contract & Vendor Management Gateway. All rights reserved.
+              © 2025 CCMP | SEPNU IT-Business Application Unit. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -139,9 +127,6 @@ export default function Footer() {
               </a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
                 Terms of Service
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                Cookie Policy
               </a>
             </div>
           </div>

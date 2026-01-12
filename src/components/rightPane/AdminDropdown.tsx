@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, 
   LayoutDashboard, 
@@ -52,14 +52,28 @@ export default function AdminDropdown({ isLoggedIn, userName, userEmail }: Admin
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const authenticatedUser = getAuthenticatedUser();
 
   // Check if user has selected an access level (role)
   const hasSelectedRole = authenticatedUser?.selectedRole !== undefined;
 
+  // Check if we're on procurement pages
+  const isProcurementPage = location.pathname.startsWith('/procurement');
+
   // Filter menu items based on user roles AND role selection
   const getFilteredMenuItems = () => {
     if (!authenticatedUser || !hasSelectedRole) return [];
+    
+    // If on procurement pages, only show Dashboard and Sign Out
+    if (isProcurementPage) {
+      return [{
+        section: 'Main',
+        items: [
+          { label: 'Dashboard', icon: LayoutDashboard, path: '/procurement/dashboard', color: 'text-blue-600' }
+        ]
+      }];
+    }
     
     return allMenuItems.map(section => ({
       ...section,

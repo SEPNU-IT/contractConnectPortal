@@ -60,7 +60,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
             <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
               <span className="text-xl font-bold text-primary-foreground">C</span>
             </div>
-            <span className="text-xl font-bold text-sidebar-foreground">CCMG</span>
+            <span className="text-xl font-bold text-sidebar-foreground">CCMP</span>
           </div>
         )}
         {collapsed && (

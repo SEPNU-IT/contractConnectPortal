@@ -1,0 +1,586 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import { 
+  FileText, 
+  Plus, 
+  Search, 
+  Calendar, 
+  User, 
+  Hash,
+  LogOut,
+  CheckCircle,
+  AlertCircle,
+  Building,
+  TrendingUp,
+  ChevronUp,
+  ChevronDown
+} from "lucide-react";
+
+interface Contract {
+  id: string;
+  contractNumber: string;
+  contractOwner: string;
+  startDate: string;
+  expiryDate: string;
+  department: string;
+  status: 'active' | 'expiring' | 'expired';
+}
+
+const mockContracts: Contract[] = [
+  {
+    id: '1',
+    contractNumber: 'CNT-2024-001',
+    contractOwner: 'John Smith',
+    startDate: '2024-01-15',
+    expiryDate: '2025-01-15',
+    department: 'Information Technology',
+    status: 'active'
+  },
+  {
+    id: '2',
+    contractNumber: 'CNT-2024-002',
+    contractOwner: 'Sarah Johnson',
+    startDate: '2024-03-01',
+    expiryDate: '2024-12-31',
+    department: 'Procurement',
+    status: 'expiring'
+  },
+  {
+    id: '3',
+    contractNumber: 'CNT-2024-003',
+    contractOwner: 'Michael Brown',
+    startDate: '2023-06-01',
+    expiryDate: '2024-06-01',
+    department: 'Law',
+    status: 'expired'
+  },
+  {
+    id: '4',
+    contractNumber: 'CNT-2024-004',
+    contractOwner: 'Emily Davis',
+    startDate: '2024-02-15',
+    expiryDate: '2025-02-15',
+    department: 'Finance',
+    status: 'active'
+  },
+];
+
+export default function ProcurementDashboard() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userEmail = searchParams.get('email') || 'user@company.com';
+  
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [newContractNumber, setNewContractNumber] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [contracts, setContracts] = useState<Contract[]>(mockContracts);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'expiring' | 'expired'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const contractsPerPage = 20;
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Contract | null;
+    direction: 'asc' | 'desc';
+  }>({ key: null, direction: 'asc' });
+
+  // Check if contract number exists
+  const existingMatches = contracts.filter(c => 
+    c.contractNumber.toLowerCase().includes(newContractNumber.toLowerCase()) && newContractNumber.length > 0
+  );
+  const exactMatch = contracts.some(c => 
+    c.contractNumber.toLowerCase() === newContractNumber.toLowerCase()
+  );
+
+  // Filter contracts based on search term and active filter
+  const getFilteredContracts = () => {
+    let filtered = contracts.filter(c =>
+      c.contractNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.contractOwner.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Apply status filter
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(c => c.status === activeFilter);
+    }
+
+    // Apply sorting
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key!];
+        const bValue = b[sortConfig.key!];
+        
+        // Handle date sorting
+        if (sortConfig.key === 'startDate' || sortConfig.key === 'expiryDate') {
+          const aDate = new Date(aValue).getTime();
+          const bDate = new Date(bValue).getTime();
+          return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
+        }
+        
+        // Handle string sorting
+        const aString = String(aValue).toLowerCase();
+        const bString = String(bValue).toLowerCase();
+        
+        if (aString < bString) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aString > bString) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredContracts = getFilteredContracts();
+  
+  // Pagination logic
+  const totalPages = Math.ceil(filteredContracts.length / contractsPerPage);
+  const startIndex = (currentPage - 1) * contractsPerPage;
+  const endIndex = startIndex + contractsPerPage;
+  const paginatedContracts = filteredContracts.slice(startIndex, endIndex);
+
+  // Reset to first page when filter or search changes
+  const handleFilterChange = (filter: typeof activeFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
+
+  // Handle column sorting
+  const handleSort = (key: keyof Contract) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  // Get sort indicator for column headers
+  const getSortIndicator = (key: keyof Contract) => {
+    if (sortConfig.key !== key) {
+      return <ChevronUp className="w-4 h-4 text-gray-300" />;
+    }
+    return sortConfig.direction === 'asc' ? 
+      <ChevronUp className="w-4 h-4 text-blue-600" /> : 
+      <ChevronDown className="w-4 h-4 text-blue-600" />;
+  };
+
+  const handleLogout = () => {
+    navigate('/procurement');
+  };
+
+  const handleAddContract = () => {
+    if (!exactMatch && newContractNumber.trim()) {
+      const newContract: Contract = {
+        id: Date.now().toString(),
+        contractNumber: newContractNumber.toUpperCase(),
+        contractOwner: 'Pending Assignment',
+        startDate: new Date().toISOString().split('T')[0],
+        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        department: 'Pending',
+        status: 'active'
+      };
+      setContracts([newContract, ...contracts]);
+      setNewContractNumber("");
+      setShowAddForm(false);
+    }
+  };
+
+  const getStatusBadge = (status: Contract['status']) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-700 border border-emerald-200 shadow-sm font-medium">Active</Badge>;
+      case 'expiring':
+        return <Badge className="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border border-amber-200 shadow-sm font-medium">Expiring Soon</Badge>;
+      case 'expired':
+        return <Badge className="bg-gradient-to-r from-rose-100 to-red-100 text-rose-700 border border-rose-200 shadow-sm font-medium">Expired</Badge>;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-pink-50 to-blue-50">
+      <Header transparent={false} />
+      
+      {/* Portal Header - Aligned with Header container */}
+      <div className="bg-gradient-to-r from-green-900 via-green-800 to-green-900 relative overflow-hidden pt-20">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='53' cy='53' r='1'/%3E%3Ccircle cx='30' cy='30' r='0.5'/%3E%3C/g%3E%3C/svg%3E")`
+          }}></div>
+        </div>
+        
+        {/* Container matching Header alignment */}
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30">
+                <Building className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Procurement Portal</h1>
+                <p className="text-pink-200">Contract Management Dashboard</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-white">{userEmail}</p>
+                <p className="text-xs text-pink-200">Procurement Team</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - Aligned with Header container */}
+      <main className="container mx-auto px-6 py-8">
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {[
+            { 
+              label: 'All Contracts', 
+              value: contracts.length, 
+              icon: FileText, 
+              gradient: 'from-blue-800 to-blue-900', 
+              bgGradient: 'from-pink-50 to-pink-100',
+              filter: 'all' as const
+            },
+            { 
+              label: 'Active Contracts', 
+              value: contracts.filter(c => c.status === 'active').length, 
+              icon: CheckCircle, 
+              gradient: 'from-emerald-500 to-emerald-600', 
+              bgGradient: 'from-emerald-50 to-emerald-100',
+              filter: 'active' as const
+            },
+            { 
+              label: 'Expiring Soon', 
+              value: contracts.filter(c => c.status === 'expiring').length, 
+              icon: AlertCircle, 
+              gradient: 'from-amber-500 to-orange-500', 
+              bgGradient: 'from-amber-50 to-orange-100',
+              filter: 'expiring' as const
+            },
+            { 
+              label: 'Expired', 
+              value: contracts.filter(c => c.status === 'expired').length, 
+              icon: TrendingUp, 
+              gradient: 'from-rose-500 to-red-500', 
+              bgGradient: 'from-rose-50 to-red-100',
+              filter: 'expired' as const
+            },
+          ].map((stat, i) => {
+            const isActive = activeFilter === stat.filter;
+            return (
+              <button
+                key={i}
+                onClick={() => handleFilterChange(stat.filter)}
+                className={`bg-gradient-to-br ${stat.bgGradient} border-2 rounded-2xl p-6 transition-all duration-300 backdrop-blur-sm text-left w-full ${
+                  isActive 
+                    ? 'border-blue-500 shadow-xl scale-105 ring-4 ring-blue-200' 
+                    : 'border-white/50 hover:shadow-xl hover:scale-105 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium mb-1 ${
+                      isActive ? 'text-blue-700' : 'text-slate-600'
+                    }`}>{stat.label}</p>
+                    <p className="text-4xl font-bold text-slate-800">{stat.value}</p>
+                    {isActive && (
+                      <p className="text-xs text-blue-600 font-medium mt-1">Active Filter</p>
+                    )}
+                  </div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${stat.gradient} shadow-lg ${
+                    isActive ? 'scale-110' : ''
+                  } transition-transform`}>
+                    <stat.icon className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Enhanced Search and Add Section */}
+        <div className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl p-8 mb-8 shadow-lg">
+          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <Input
+                placeholder="Search contracts, owners, departments..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+                className="pl-12 h-12 bg-white/70 border-slate-200 focus:border-blue-800 focus:ring-blue-800/20 rounded-xl backdrop-blur-sm"
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-800 via-pink-400 to-blue-900 rounded-xl blur opacity-30"></div>
+              <Button
+                onClick={() => setShowAddForm(!showAddForm)}
+                className="relative bg-gradient-to-r from-blue-800 via-blue-700 to-blue-900 hover:from-blue-900 hover:via-blue-800 hover:to-blue-900 text-white font-semibold gap-2 px-6 py-3 rounded-xl transition-all duration-300"
+              >
+                <Plus className="w-5 h-5" />
+                Add New Contract
+              </Button>
+            </div>
+          </div>
+
+          {/* Enhanced Add Contract Form */}
+          {showAddForm && (
+            <div className="mt-8 pt-8 border-t border-slate-200/50">
+              <div className="bg-gradient-to-br from-pink-50/50 to-blue-50/50 rounded-2xl p-6 border border-pink-200">
+                <div className="max-w-lg">
+                  <label className="block text-sm font-semibold text-slate-700 mb-3">
+                    <Hash className="w-4 h-4 inline mr-2 text-blue-800" />
+                    Enter New Contract Number
+                  </label>
+                  <div className="flex gap-3">
+                    <div className="flex-1 relative">
+                      <Input
+                        placeholder="e.g., CNT-2024-005"
+                        value={newContractNumber}
+                        onChange={(e) => setNewContractNumber(e.target.value)}
+                        className={`h-12 bg-white/70 border-2 rounded-xl backdrop-blur-sm transition-all ${
+                          exactMatch 
+                            ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-400/20' 
+                            : 'border-slate-200 focus:border-blue-800 focus:ring-blue-800/20'
+                        }`}
+                      />
+                      {exactMatch && (
+                        <div className="absolute -bottom-6 left-0">
+                          <p className="text-xs text-rose-600 flex items-center gap-1 font-medium">
+                            <AlertCircle className="w-3 h-3" />
+                            This contract number already exists
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-400 to-blue-800 rounded-xl blur opacity-30"></div>
+                      <Button
+                        onClick={handleAddContract}
+                        disabled={exactMatch || !newContractNumber.trim()}
+                        className="relative bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-900 hover:to-blue-800 text-white font-semibold px-6 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                      >
+                        Add Contract
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Enhanced similar contracts preview */}
+                  {existingMatches.length > 0 && !exactMatch && (
+                    <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm font-semibold text-amber-700 mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Similar contracts found:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {existingMatches.slice(0, 5).map(c => (
+                          <Badge key={c.id} className="bg-white border border-amber-300 text-amber-700 hover:bg-amber-100 transition-colors">
+                            {c.contractNumber}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Enhanced Contracts Table */}
+        <div className="bg-white/60 backdrop-blur-xl border border-white/30 rounded-2xl overflow-hidden shadow-lg">
+          <div className="px-8 py-6 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  {activeFilter === 'all' ? 'All Contracts' : 
+                   activeFilter === 'active' ? 'Active Contracts' :
+                   activeFilter === 'expiring' ? 'Expiring Soon' : 'Expired Contracts'}
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  Showing {paginatedContracts.length} of {filteredContracts.length} contracts
+                  {searchTerm && ` matching "${searchTerm}"`}
+                </p>
+              </div>
+              {activeFilter !== 'all' && (
+                <button
+                  onClick={() => handleFilterChange('all')}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-slate-100 via-pink-50 to-blue-50">
+                <tr>
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('contractNumber')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Hash className="w-4 h-4" /> Contract Number
+                      {getSortIndicator('contractNumber')}
+                    </button>
+                  </th>
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('contractOwner')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <User className="w-4 h-4" /> Contract Owner
+                      {getSortIndicator('contractOwner')}
+                    </button>
+                  </th>
+                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
+                    Department
+                  </th>
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('startDate')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" /> Start Date
+                      {getSortIndicator('startDate')}
+                    </button>
+                  </th>
+                  <th className="text-left px-6 py-5">
+                    <button
+                      onClick={() => handleSort('expiryDate')}
+                      className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                    >
+                      <Calendar className="w-4 h-4" /> Expiry Date
+                      {getSortIndicator('expiryDate')}
+                    </button>
+                  </th>
+                  <th className="text-left px-6 py-5 text-sm font-semibold text-slate-700">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200/50">
+                {paginatedContracts.map((contract) => (
+                  <tr 
+                    key={contract.id} 
+                    className={`transition-all duration-200 ${
+                      contract.status === 'expired' 
+                        ? 'bg-red-200/90 hover:bg-red-300/90 border-l-8 border-l-red-600 shadow-lg shadow-red-200/50' 
+                        : 'hover:bg-gradient-to-r hover:from-pink-50/50 hover:to-blue-50/50'
+                    }`}
+                  >
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-pink-100 to-blue-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-blue-800" />
+                        </div>
+                        <span className="font-mono font-semibold text-slate-800">{contract.contractNumber}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-slate-800 font-medium">{contract.contractOwner}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-slate-600">{contract.department}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-slate-600">{contract.startDate}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className="text-slate-600">{contract.expiryDate}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                      {getStatusBadge(contract.status)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {paginatedContracts.length === 0 && filteredContracts.length === 0 && (
+              <div className="px-6 py-16 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-slate-600 font-medium">No contracts found matching your criteria</p>
+                <p className="text-slate-400 text-sm mt-1">Try adjusting your search or filter</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="px-8 py-6 bg-gradient-to-r from-slate-50 to-slate-100 border-t border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-600">
+                  Page {currentPage} of {totalPages} • {filteredContracts.length} total contracts
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3"
+                  >
+                    Previous
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                      if (pageNum > totalPages) return null;
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+}
